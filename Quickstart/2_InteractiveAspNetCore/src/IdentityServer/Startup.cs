@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 
+using IdentityServer4;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,6 +33,15 @@ namespace IdentityServer
 
             // not recommended for production - you need to store your key material somewhere secure
             builder.AddDeveloperSigningCredential();
+
+            services.AddAuthentication()
+                .AddGoogle("Google", options =>
+                 {
+                     options.SignInScheme = options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
+
+                     options.ClientId = "";
+                     options.ClientSecret = "";
+                 });
         }
 
         public void Configure(IApplicationBuilder app)
