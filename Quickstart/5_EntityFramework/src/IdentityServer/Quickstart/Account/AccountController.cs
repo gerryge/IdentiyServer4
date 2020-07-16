@@ -91,15 +91,9 @@ namespace IdentityServer
                     await _interaction.DenyAuthorizationAsync(context, AuthorizationError.AccessDenied);
 
                     // we can trust model.ReturnUrl since GetAuthorizationContextAsync returned non-null
-                    //if (context.IsNativeClient())
-                    //{
-                    //    // The client is native, so this change in how to
-                    //    // return the response is for better UX for the end user.
-                    //    return this.LoadingPage("Redirect", model.ReturnUrl);
-                    //}
-                    if (await _clientStore.IsPkceClientAsync(context.Client.ClientId))
+                    if (context.IsNativeClient())
                     {
-                        // if the client is PKCE then we assume it's native, so this change in how to
+                        // The client is native, so this change in how to
                         // return the response is for better UX for the end user.
                         return this.LoadingPage("Redirect", model.ReturnUrl);
                     }
@@ -143,13 +137,7 @@ namespace IdentityServer
 
                     if (context != null)
                     {
-                        //if (context.IsNativeClient())
-                        //{
-                        //    // The client is native, so this change in how to
-                        //    // return the response is for better UX for the end user.
-                        //    return this.LoadingPage("Redirect", model.ReturnUrl);
-                        //}
-                        if (await _clientStore.IsPkceClientAsync(context.Client.ClientId))
+                        if (context.IsNativeClient())
                         {
                             // The client is native, so this change in how to
                             // return the response is for better UX for the end user.

@@ -26,7 +26,6 @@ namespace IdentityServer
     public class ConsentController : Controller
     {
         private readonly IIdentityServerInteractionService _interaction;
-        private readonly IClientStore _clientStore;
         private readonly IEventService _events;
         private readonly ILogger<ConsentController> _logger;
 
@@ -37,7 +36,6 @@ namespace IdentityServer
             ILogger<ConsentController> logger)
         {
             _interaction = interaction;
-            _clientStore = clientStore;
             _events = events;
             _logger = logger;
         }
@@ -71,15 +69,9 @@ namespace IdentityServer
             if (result.IsRedirect)
             {
                 var context = await _interaction.GetAuthorizationContextAsync(model.ReturnUrl);
-                //if (context?.IsNativeClient() == true)
-                //{
-                //    // The client is native, so this change in how to
-                //    // return the response is for better UX for the end user.
-                //    return this.LoadingPage("Redirect", result.RedirectUri);
-                //}
-                if (await _clientStore.IsPkceClientAsync(result.Client.ClientId))
+                if (context?.IsNativeClient() == true)
                 {
-                    // if the client is PKCE then we assume it's native, so this change in how to
+                    // The client is native, so this change in how to
                     // return the response is for better UX for the end user.
                     return this.LoadingPage("Redirect", result.RedirectUri);
                 }

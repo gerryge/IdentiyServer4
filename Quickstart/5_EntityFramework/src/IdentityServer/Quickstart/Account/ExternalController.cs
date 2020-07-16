@@ -23,13 +23,11 @@ namespace IdentityServer
     {
         private readonly TestUserStore _users;
         private readonly IIdentityServerInteractionService _interaction;
-        private readonly IClientStore _clientStore;
         private readonly ILogger<ExternalController> _logger;
         private readonly IEventService _events;
 
         public ExternalController(
             IIdentityServerInteractionService interaction,
-            IClientStore clientStore,
             IEventService events,
             ILogger<ExternalController> logger,
             TestUserStore users = null)
@@ -39,7 +37,6 @@ namespace IdentityServer
             _users = users ?? new TestUserStore(TestUsers.Users);
 
             _interaction = interaction;
-            _clientStore = clientStore;
             _logger = logger;
             _events = events;
         }
@@ -132,13 +129,7 @@ namespace IdentityServer
 
             if (context != null)
             {
-                //if (context.IsNativeClient())
-                //{
-                //    // The client is native, so this change in how to
-                //    // return the response is for better UX for the end user.
-                //    return this.LoadingPage("Redirect", returnUrl);
-                //}
-                if (await _clientStore.IsPkceClientAsync(context.Client.ClientId))
+                if (context.IsNativeClient())
                 {
                     // The client is native, so this change in how to
                     // return the response is for better UX for the end user.
