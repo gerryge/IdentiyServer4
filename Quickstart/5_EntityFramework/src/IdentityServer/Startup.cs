@@ -36,7 +36,7 @@ namespace IdentityServer
             //    .AddTestUsers(TestUsers.Users);
             // migration assembly required as DbContext's are in a different assembly
             var migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
-            const string connectionString = @"Data Source=(LocalDb)\MSSQLLocalDB;database=IdentityServer4.Quickstart.EntityFramework-3.0.0;trusted_connection=yes;";
+            const string connectionString = @"Data Source=(LocalDb)\MSSQLLocalDB;database=IdentityServer4.Quickstart.EntityFramework-4.0.0;trusted_connection=yes;";
 
             var builder = services.AddIdentityServer()
                 .AddTestUsers(TestUsers.Users)

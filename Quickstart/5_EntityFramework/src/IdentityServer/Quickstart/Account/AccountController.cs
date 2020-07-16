@@ -64,7 +64,7 @@ namespace IdentityServer
             if (vm.IsExternalLoginOnly)
             {
                 // we only have one option for logging in and it's an external provider
-                return RedirectToAction("Challenge", "External", new { provider = vm.ExternalLoginScheme, returnUrl });
+                return RedirectToAction("Challenge", "External", new { scheme = vm.ExternalLoginScheme, returnUrl });
             }
 
             return View(vm);
@@ -88,10 +88,16 @@ namespace IdentityServer
                     // if the user cancels, send a result back into IdentityServer as if they 
                     // denied the consent (even if this client does not require consent).
                     // this will send back an access denied OIDC error response to the client.
-                    await _interaction.GrantConsentAsync(context, ConsentResponse.Denied);
+                    await _interaction.DenyAuthorizationAsync(context, AuthorizationError.AccessDenied);
 
                     // we can trust model.ReturnUrl since GetAuthorizationContextAsync returned non-null
-                    if (await _clientStore.IsPkceClientAsync(context.ClientId))
+                    //if (context.IsNativeClient())
+                    //{
+                    //    // The client is native, so this change in how to
+                    //    // return the response is for better UX for the end user.
+                    //    return this.LoadingPage("Redirect", model.ReturnUrl);
+                    //}
+                    if (await _clientStore.IsPkceClientAsync(context.Client.ClientId))
                     {
                         // if the client is PKCE then we assume it's native, so this change in how to
                         // return the response is for better UX for the end user.
@@ -113,7 +119,7 @@ namespace IdentityServer
                 if (_users.ValidateCredentials(model.Username, model.Password))
                 {
                     var user = _users.FindByUsername(model.Username);
-                    await _events.RaiseAsync(new UserLoginSuccessEvent(user.Username, user.SubjectId, user.Username, clientId: context?.ClientId));
+                    await _events.RaiseAsync(new UserLoginSuccessEvent(user.Username, user.SubjectId, user.Username, clientId: context?.Client.ClientId));
 
                     // only set explicit expiration here if user chooses "remember me". 
                     // otherwise we rely upon expiration configured in cookie middleware.
@@ -137,9 +143,15 @@ namespace IdentityServer
 
                     if (context != null)
                     {
-                        if (await _clientStore.IsPkceClientAsync(context.ClientId))
+                        //if (context.IsNativeClient())
+                        //{
+                        //    // The client is native, so this change in how to
+                        //    // return the response is for better UX for the end user.
+                        //    return this.LoadingPage("Redirect", model.ReturnUrl);
+                        //}
+                        if (await _clientStore.IsPkceClientAsync(context.Client.ClientId))
                         {
-                            // if the client is PKCE then we assume it's native, so this change in how to
+                            // The client is native, so this change in how to
                             // return the response is for better UX for the end user.
                             return this.LoadingPage("Redirect", model.ReturnUrl);
                         }
@@ -164,7 +176,7 @@ namespace IdentityServer
                     }
                 }
 
-                await _events.RaiseAsync(new UserLoginFailureEvent(model.Username, "invalid credentials", clientId:context?.ClientId));
+                await _events.RaiseAsync(new UserLoginFailureEvent(model.Username, "invalid credentials", clientId: context?.Client.ClientId));
                 ModelState.AddModelError(string.Empty, AccountOptions.InvalidCredentialsErrorMessage);
             }
 
@@ -173,7 +185,7 @@ namespace IdentityServer
             return View(vm);
         }
 
-        
+
         /// <summary>
         /// Show logout page
         /// </summary>
@@ -263,9 +275,7 @@ namespace IdentityServer
             var schemes = await _schemeProvider.GetAllSchemesAsync();
 
             var providers = schemes
-                .Where(x => x.DisplayName != null ||
-                            (x.Name.Equals(AccountOptions.WindowsAuthenticationSchemeName, StringComparison.OrdinalIgnoreCase))
-                )
+                .Where(x => x.DisplayName != null)
                 .Select(x => new ExternalProvider
                 {
                     DisplayName = x.DisplayName ?? x.Name,
@@ -273,9 +283,9 @@ namespace IdentityServer
                 }).ToList();
 
             var allowLocal = true;
-            if (context?.ClientId != null)
+            if (context?.Client.ClientId != null)
             {
-                var client = await _clientStore.FindEnabledClientByIdAsync(context.ClientId);
+                var client = await _clientStore.FindEnabledClientByIdAsync(context.Client.ClientId);
                 if (client != null)
                 {
                     allowLocal = client.EnableLocalLogin;
